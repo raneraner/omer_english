@@ -298,18 +298,18 @@
 
     <script>
         // --- DATA: THE 5 LETTERS ---
-        // Includes Wikimedia Commons OGG/MP3 spoken letter fallbacks + Google TTS fallback
+        // Uses exact CMU Pronouncing Dictionary tokens so iOS/Android/Desktop TTS pronounces the exact letter names:
+        // 'eigh' -> /eɪ/ (A), 'bee' -> /biː/ (B), 'en' -> /ɛn/ (N), 'dee' -> /diː/ (D), 'jee' -> /dʒiː/ (G)
         const LETTERS_DATA = [
             {
                 id: 'A',
                 upper: 'A',
                 lower: 'a',
                 hebrewName: 'אֵיי',
-                ttsPhonetic: 'ay',
+                ttsPhonetic: 'eigh',
                 word: 'Apple',
                 wordHeb: 'תפוח',
                 emoji: '🍎',
-                audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/En-us-a.ogg',
                 tip: 'A גדולה נראית כמו אוהל משולש, ו-a קטנה כמו תפוח עגול עם עלה בצד!',
                 color: 'from-rose-400 to-red-500',
                 lightBg: 'bg-rose-50',
@@ -325,7 +325,6 @@
                 word: 'Balloon',
                 wordHeb: 'בלון',
                 emoji: '🎈',
-                audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/60/En-us-b.ogg',
                 tip: 'ל-B גדולה יש 2 בטנים לימין, ול-b קטנה יש בטן אחת לימין!',
                 color: 'from-blue-400 to-indigo-500',
                 lightBg: 'bg-blue-50',
@@ -341,7 +340,6 @@
                 word: 'Nest',
                 wordHeb: 'קן לציפור',
                 emoji: '🪺',
-                audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d4/En-us-n.ogg',
                 tip: 'N גדולה עם קווים ישרים, ו-n קטנה נראית כמו שער או מנהרה קטנה!',
                 color: 'from-emerald-400 to-teal-500',
                 lightBg: 'bg-emerald-50',
@@ -357,7 +355,6 @@
                 word: 'Dog',
                 wordHeb: 'כלב',
                 emoji: '🐶',
-                audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c8/En-us-d.ogg',
                 tip: 'שים לב! ל-d קטנה הבטן פונה שמאלה (הפוך מ-b)!',
                 color: 'from-amber-400 to-orange-500',
                 lightBg: 'bg-amber-50',
@@ -373,7 +370,6 @@
                 word: 'Guitar',
                 wordHeb: 'גיטרה',
                 emoji: '🎸',
-                audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/07/En-us-g.ogg',
                 tip: 'ל-g קטנה יש עיגול למעלה וזנב עגול שיורד למטה כמו וו!',
                 color: 'from-purple-400 to-fuchsia-500',
                 lightBg: 'bg-purple-50',
@@ -411,10 +407,9 @@
         let selectedPairCard = null;
         let matchedPairsCount = 0;
 
-        // --- ROBUST MULTI-LAYER AUDIO ENGINE ---
+        // --- ROBUST AUDIO & SPEECH ENGINE ---
         let audioCtx = null;
         let preferredEnglishVoice = null;
-        const preloadedAudioMap = {};
 
         function initAudioEngine() {
             if (!audioCtx) {
@@ -426,17 +421,6 @@
             if (audioCtx && audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
-
-            // Preload HTML5 audio elements for each letter
-            LETTERS_DATA.forEach(item => {
-                if (!preloadedAudioMap[item.id]) {
-                    const audioEl = new Audio();
-                    audioEl.src = item.audioUrl;
-                    audioEl.preload = 'auto';
-                    preloadedAudioMap[item.id] = audioEl;
-                }
-            });
-
             loadVoices();
         }
 
@@ -445,7 +429,7 @@
             const voices = window.speechSynthesis.getVoices();
             if (voices && voices.length > 0) {
                 preferredEnglishVoice =
-                    voices.find(v => v.lang === 'en-US' && (v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Natural'))) ||
+                    voices.find(v => v.lang === 'en-US' && (v.name.includes('Samantha') || v.name.includes('Google') || v.name.includes('Natural'))) ||
                     voices.find(v => v.lang.startsWith('en-US')) ||
                     voices.find(v => v.lang.startsWith('en'));
             }
@@ -460,7 +444,7 @@
             playTone('correct');
             const overlay = document.getElementById('audioUnlockOverlay');
             if (overlay) overlay.classList.add('hidden');
-            // Speak a short welcome or the letter A to warm up TTS
+            // Warm up TTS with the letter A
             setTimeout(() => {
                 speakLetter('A');
             }, 250);
@@ -531,20 +515,16 @@
             }
         }
 
-        // Play specific distinct musical signature per letter + Voice (Web Speech + HTML5 Audio fallback)
+        // Speak exact letter pronunciation using Web Speech API
         function speakLetter(letterId, word = '') {
             initAudioEngine();
             playTone('pop');
 
             const letterUpper = letterId.toUpperCase();
             const letterObj = LETTERS_DATA.find(l => l.id === letterUpper);
-            const textToSpeak = word
-                ? `${letterUpper}. ${word}`
-                : (letterObj ? letterObj.ttsPhonetic : letterUpper);
+            const phoneticName = letterObj ? letterObj.ttsPhonetic : letterUpper;
+            const textToSpeak = word ? `${phoneticName}, ${word}` : phoneticName;
 
-            let speechStarted = false;
-
-            // Layer 1: Web Speech API
             if ('speechSynthesis' in window) {
                 try {
                     window.speechSynthesis.cancel();
@@ -556,42 +536,14 @@
                     if (preferredEnglishVoice) {
                         utter.voice = preferredEnglishVoice;
                     }
-                    utter.rate = 0.85;
+                    utter.rate = 0.82;
                     utter.pitch = 1.05;
                     utter.volume = 1.0;
 
-                    utter.onstart = () => {
-                        speechStarted = true;
-                    };
-                    utter.onerror = () => {
-                        if (!speechStarted) playHtml5AudioFallback(letterUpper);
-                    };
-
                     window.speechSynthesis.speak(utter);
-
-                    // Layer 2: If SpeechSynthesis fails to trigger within 350ms (common in sandboxed iframes), play HTML5 audio
-                    setTimeout(() => {
-                        if (!speechStarted && !window.speechSynthesis.speaking) {
-                            playHtml5AudioFallback(letterUpper);
-                        }
-                    }, 350);
                 } catch (err) {
-                    playHtml5AudioFallback(letterUpper);
+                    // Ignore speech errors
                 }
-            } else {
-                playHtml5AudioFallback(letterUpper);
-            }
-        }
-
-        function playHtml5AudioFallback(letterUpper) {
-            try {
-                const audioEl = preloadedAudioMap[letterUpper];
-                if (audioEl) {
-                    audioEl.currentTime = 0;
-                    audioEl.play().catch(() => {});
-                }
-            } catch (e) {
-                // Ignore fallback errors
             }
         }
 
