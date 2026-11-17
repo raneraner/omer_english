@@ -150,7 +150,7 @@
         </div>
     </header>
 
-    <!-- Navigation Tabs (8 Modes covering Letters + Exam Vocabulary/Listening/Reading/Writing) -->
+    <!-- Navigation Tabs -->
     <nav class="w-full max-w-4xl mb-6 space-y-2">
         <div class="text-xs font-extrabold text-indigo-900 px-1">חלק א׳: אותיות (A, B, N, D, G)</div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
@@ -287,14 +287,14 @@
         <section id="section-vocab" class="hidden w-full flex-1 flex flex-col justify-between">
             <div class="text-center mb-3">
                 <h2 class="text-2xl font-extrabold text-slate-800 mb-1">אוצר המילים של עומר למבחן! 🗣️</h2>
-                <p class="text-slate-600 text-sm">בחר נושא ולחץ על כל כרטיסייה כדי לשמוע את המילה באנגלית ולראות את הפירוש</p>
+                <p class="text-slate-600 text-sm">בחר נושא ולחץ על כל כרטיסייה כדי לשמוע את המילה באנגלית ולראות אותיות קטנות, גדולות ותרגום</p>
             </div>
 
             <!-- Category Filter Pills -->
             <div id="vocabCategoryTabs" class="flex flex-wrap justify-center gap-1.5 mb-4"></div>
 
             <!-- Vocabulary Grid -->
-            <div id="vocabGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[360px] overflow-y-auto p-1"></div>
+            <div id="vocabGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 max-h-[380px] overflow-y-auto p-1"></div>
         </section>
 
         <!-- MODE 6: LISTENING COMPREHENSION (הבנת הנשמע: מילה + אות פותחת) -->
@@ -562,7 +562,7 @@
             { id: 'phrases', label: '💬 תארים ו-I have / look' }
         ];
 
-        // Reading sentences & short words (Requirement 5: short words + I have + look)
+        // Reading sentences & short words
         const READING_ITEMS = [
             { text: 'I have a dog', hebrew: 'יש לי כלב', emoji: '🐶', distractors: ['🐱', '🦆', '🍎'] },
             { text: 'I have a book', hebrew: 'יש לי ספר', emoji: '📖', distractors: ['🎒', '📦', '💻'] },
@@ -578,7 +578,7 @@
             { text: 'small', hebrew: 'קטן', emoji: '🐜', distractors: ['🐘', '🏠', '🚪'] }
         ];
 
-        // Writing items (Requirement 4: UPPERCASE to lowercase + First Name Omer)
+        // Writing items
         const WRITING_ITEMS = [
             { type: 'name', prompt: 'כתוב את השם הפרטי שלך באנגלית (התחל באות גדולה!):', hintEmoji: '👑', display: 'עומר -> O _ _ _', answer: 'Omer', audio: 'Omer' },
             { type: 'lower', prompt: 'כתוב את המילה באותיות קטנות:', hintEmoji: '🐶', display: 'DOG', answer: 'dog', audio: 'dog' },
@@ -605,34 +605,27 @@
         let streak = 0;
         let isWaitingNext = false;
 
-        // Match Case Mode State
         let matchQueue = [];
         let matchIndex = 0;
         let currentMatchQuestion = null;
 
-        // Find Letter Mode State
         let findQueue = [];
         let findIndex = 0;
         let currentFindQuestion = null;
 
-        // Pairs Mode State
         let selectedPairCard = null;
         let matchedPairsCount = 0;
 
-        // Vocab Mode State
         let activeVocabCategory = 'all';
 
-        // Listen Word Mode State
         let listenWordQueue = [];
         let listenWordIndex = 0;
         let currentListenWordQ = null;
 
-        // Read Word Mode State
         let readWordQueue = [];
         let readWordIndex = 0;
         let currentReadWordQ = null;
 
-        // Write Word Mode State
         let writeWordQueue = [];
         let writeWordIndex = 0;
         let currentWriteWordQ = null;
@@ -1276,7 +1269,7 @@
         }
 
         // ==========================================
-        // MODE 5: VOCABULARY EXPLORER (אוצר מילים)
+        // MODE 5: VOCABULARY EXPLORER (אוצר מילים: קטנות + גדולות + עברית)
         // ==========================================
         function initVocabExplorer() {
             const catContainer = document.getElementById('vocabCategoryTabs');
@@ -1302,17 +1295,20 @@
             grid.innerHTML = '';
 
             filtered.forEach(item => {
+                const lowerForm = item.word.toLowerCase();
+                const upperForm = item.word.toUpperCase();
                 const card = document.createElement('div');
                 card.className = "bg-gradient-to-b from-white to-slate-50 border-2 border-slate-200 hover:border-emerald-400 rounded-2xl p-3 flex flex-col items-center text-center shadow-sm cursor-pointer card-bounce";
                 card.onclick = () => speakEnglishPhrase(item.word);
                 card.innerHTML = `
-                    <div class="w-full flex justify-between items-center text-xs text-slate-400">
-                        <span>${item.startsWith ? `אות: ${item.startsWith}` : ''}</span>
+                    <div class="w-full flex justify-between items-center text-[11px] text-slate-400">
+                        <span class="font-bold text-indigo-600">${item.startsWith ? `אות: ${item.startsWith}` : ''}</span>
                         <span>🔊</span>
                     </div>
                     <div class="text-3xl my-1">${item.emoji}</div>
-                    <div class="english-letter font-bold text-lg text-slate-800">${item.word}</div>
-                    <div class="text-xs font-bold text-emerald-700 mt-0.5">${item.hebrew}</div>
+                    <div class="english-letter font-bold text-lg text-slate-800 leading-tight">${lowerForm}</div>
+                    <div class="english-letter font-bold text-sm text-indigo-600 tracking-wide mt-0.5">${upperForm}</div>
+                    <div class="text-xs font-extrabold text-emerald-700 mt-1.5 pt-1 border-t border-slate-100 w-full">${item.hebrew}</div>
                 `;
                 grid.appendChild(card);
             });
@@ -1322,7 +1318,6 @@
         // MODE 6: LISTENING COMPREHENSION (הבנת הנשמע)
         // ==========================================
         function initListenWordGame() {
-            // Mix of 6 "Match picture to spoken word" + 4 "Identify starting letter of spoken word" (Requirement 3)
             const pictureItems = shuffleArray(EXAM_VOCABULARY.filter(v => !['I have', 'look', 'help', 'happy / good'].includes(v.word))).slice(0, 6);
             const letterItems = shuffleArray(EXAM_VOCABULARY.filter(v => v.startsWith !== '')).slice(0, 4);
 
@@ -1527,7 +1522,6 @@
             const input = document.getElementById('writeWordInput');
             input.value = '';
 
-            // On-screen letter buttons for easy tapping on mobile/iPad
             const hintContainer = document.getElementById('writeHintButtons');
             hintContainer.innerHTML = '';
             const lettersPool = shuffleArray(currentWriteWordQ.answer.split(''));
