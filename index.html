@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="האותיות של עומר">
+    <title>אלוף האותיות של עומר! 🏆</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Rubik for Hebrew, Comic Neue & Fredoka for very clear kid-friendly English letters -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Comic+Neue:wght@700&family=Fredoka:wght@500;600;700&family=Rubik:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <!-- Canvas Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        body {
+            font-family: 'Rubik', sans-serif;
+            background: linear-gradient(135deg, #e0f2fe 0%, #fef3c7 50%, #fce7f3 100%);
+            min-height: 100vh;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        button {
+            outline: none !important;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+        button:focus, button:focus-visible {
+            outline: none !important;
+            box-shadow: none;
+        }
+
+        /* Kid-friendly English font where lowercase 'a' and 'g' look clean and standard */
+        .english-letter {
+            font-family: 'Comic Neue', 'Fredoka', cursive, sans-serif;
+            direction: ltr;
+            display: inline-block;
+        }
+
+        .card-bounce {
+            transition: transform 0.18s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.15s ease, border-color 0.15s ease;
+        }
+        
+        /* Apply hover effects ONLY on desktop devices with a mouse, preventing sticky highlights on iPhone/touch */
+        @media (hover: hover) and (pointer: fine) {
+            .card-bounce:hover {
+                transform: translateY(-4px) scale(1.02);
+            }
+            .option-btn-match:hover {
+                background-color: #eef2ff;
+                border-color: #a5b4fc;
+            }
+            .option-btn-find:hover {
+                background-color: #fffbeb;
+                border-color: #fcd34d;
+            }
+        }
+
+        .card-bounce:active {
+            transform: translateY(2px) scale(0.96);
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-8px) rotate(-3deg); }
+            75% { transform: translateX(8px) rotate(3deg); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        @keyframes pop {
+            0% { transform: scale(0.8); opacity: 0.5; }
+            50% { transform: scale(1.12); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .animate-pop {
+            animation: pop 0.35s ease-out forwards;
+        }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #93c5fd;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="p-3 sm:p-6 flex flex-col items-center justify-start">
+
+    <!-- Audio Unlock Welcome Overlay (Solves Browser Autoplay & Iframe Block) -->
+    <div id="audioUnlockOverlay" class="fixed inset-0 z-50 bg-indigo-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 text-center shadow-2xl border-4 border-amber-400 animate-pop">
+            <div class="w-20 h-20 mx-auto mb-4 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 flex items-center justify-center text-4xl shadow-lg text-white">
+                🔊
+            </div>
+            <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-800 mb-2">שלום עומר! 👋</h2>
+            <p class="text-slate-600 mb-6 text-base sm:text-lg leading-relaxed">
+                מוכן לתרגל את האותיות <span class="english-letter font-bold text-indigo-600">A, B, N, D, G</span> למבחן באנגלית?<br>
+                <span class="text-sm text-slate-500">לחץ על הכפתור כדי להפעיל את הרמקולים ולהתחיל!</span>
+            </p>
+            <button onclick="unlockAudioAndStart()" class="w-full py-4 px-6 rounded-2xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-extrabold text-xl shadow-xl card-bounce flex items-center justify-center gap-3">
+                <span>🔊</span>
+                <span>הפעל קול והתחל לשחק!</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Header & Scoreboard -->
+    <header class="w-full max-w-4xl bg-white/90 backdrop-blur-md rounded-3xl shadow-lg border-2 border-blue-200 p-4 mb-5 flex flex-wrap items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+            <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-tr from-blue-500 to-indigo-600 flex items-center justify-center text-2xl sm:text-3xl shadow-md text-white font-bold">
+                🚀
+            </div>
+            <div>
+                <h1 class="text-xl sm:text-2xl font-extrabold text-slate-800">התרגול של עומר!</h1>
+                <p class="text-xs sm:text-sm text-slate-500 font-medium">מתכוננים למבחן באנגלית: <span class="english-letter font-bold text-indigo-600">A, B, N, D, G</span></p>
+            </div>
+        </div>
+
+        <!-- Stats & Audio Test Button -->
+        <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <button onclick="testAudioSystem()" id="audioTestBtn" class="flex items-center gap-1.5 bg-indigo-50 hover:bg-indigo-100 border-2 border-indigo-300 text-indigo-700 px-3 py-1.5 rounded-2xl shadow-sm font-bold text-xs sm:text-sm card-bounce">
+                <span>🔊</span>
+                <span id="audioStatusText">בדיקת שמע</span>
+            </button>
+            <div class="flex items-center gap-1.5 bg-amber-100 border-2 border-amber-300 px-3.5 py-1.5 rounded-2xl shadow-sm">
+                <span class="text-xl">⭐</span>
+                <span id="scoreDisplay" class="font-extrabold text-amber-800 text-lg">0</span>
+            </div>
+            <div class="flex items-center gap-1.5 bg-orange-100 border-2 border-orange-300 px-3.5 py-1.5 rounded-2xl shadow-sm" title="רצף הצלחות">
+                <span class="text-xl">🔥</span>
+                <span id="streakDisplay" class="font-extrabold text-orange-800 text-lg">0</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Navigation Tabs -->
+    <nav class="w-full max-w-4xl grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-6">
+        <button onclick="switchMode('learn')" id="tab-learn" class="mode-tab card-bounce flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-sm sm:text-base shadow-md border-2 transition-all">
+            <span class="text-xl">📚</span>
+            <span>הכרת האותיות</span>
+        </button>
+        <button onclick="switchMode('matchCase')" id="tab-matchCase" class="mode-tab card-bounce flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-sm sm:text-base shadow-md border-2 transition-all">
+            <span class="text-xl">🔄</span>
+            <span>גדולה וקטנה</span>
+        </button>
+        <button onclick="switchMode('findLetter')" id="tab-findLetter" class="mode-tab card-bounce flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-sm sm:text-base shadow-md border-2 transition-all">
+            <span class="text-xl">🎧</span>
+            <span>זהה את האות</span>
+        </button>
+        <button onclick="switchMode('pairs')" id="tab-pairs" class="mode-tab card-bounce flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-sm sm:text-base shadow-md border-2 transition-all">
+            <span class="text-xl">🧩</span>
+            <span>לוח זוגות</span>
+        </button>
+    </nav>
+
+    <!-- Main Game Container -->
+    <main class="w-full max-w-4xl bg-white/95 backdrop-blur-md rounded-3xl shadow-xl border-2 border-indigo-100 p-4 sm:p-8 min-h-[430px] flex flex-col justify-between relative overflow-hidden">
+        
+        <!-- Feedback Banner -->
+        <div id="feedbackBanner" class="hidden mb-4 py-2.5 px-4 rounded-2xl text-center font-bold text-lg transition-all"></div>
+
+        <!-- MODE 1: LEARN CARDS (כרטיסיות לימוד) -->
+        <section id="section-learn" class="w-full flex-1 flex flex-col justify-between">
+            <div class="text-center mb-5">
+                <h2 class="text-2xl font-extrabold text-slate-800 mb-1">בוא נכיר את 5 האותיות למבחן! 🌟</h2>
+                <p class="text-slate-600 text-sm sm:text-base">לחץ על כל כרטיסייה כדי לשמוע איך אומרים את האות באנגלית ולראותטיפ לזכירה</p>
+            </div>
+
+            <div id="learnGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 my-auto">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Tricky Letters Tip Box -->
+            <div class="mt-6 bg-indigo-50 border-2 border-indigo-200 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3">
+                    <span class="text-3xl">💡</span>
+                    <div>
+                        <h3 class="font-extrabold text-indigo-900 text-base sm:text-lg">הסוד של עומר לא להתבלבל בין <span class="english-letter text-blue-600">b</span> ל-<span class="english-letter text-rose-600">d</span>:</h3>
+                        <p class="text-indigo-800 text-sm">
+                            באות <span class="english-letter font-bold text-lg text-blue-600">B</span> גדולה הבטן פונה <b>ימינה</b> וכך גם ב-<span class="english-letter font-bold text-lg text-blue-600">b</span> קטנה! באות <span class="english-letter font-bold text-lg text-rose-600">d</span> קטנה הבטן פונה <b>שמאלה</b>.
+                        </p>
+                    </div>
+                </div>
+                <button onclick="switchMode('matchCase')" class="shrink-0 bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-5 py-2.5 rounded-xl shadow-md card-bounce">
+                    הבנתי! בוא נתרגל ⬅️
+                </button>
+            </div>
+        </section>
+
+        <!-- MODE 2: MATCH UPPER & LOWER (גדולה וקטנה) -->
+        <section id="section-matchCase" class="hidden w-full flex-1 flex flex-col justify-between items-center">
+            <div class="w-full flex items-center justify-between mb-2">
+                <span id="matchProgressText" class="text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">שאלה 1 מתוך 10</span>
+                <button onclick="speakCurrentTarget()" class="flex items-center gap-1.5 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-full transition">
+                    <span>🔊</span> השמע אות
+                </button>
+            </div>
+
+            <div class="text-center my-2">
+                <h2 id="matchPrompt" class="text-xl sm:text-2xl font-extrabold text-slate-800 mb-3">מצא את האות הקטנה שמתאימה לאות:</h2>
+                
+                <!-- Target Letter Card -->
+                <div onclick="speakCurrentTarget()" class="cursor-pointer mx-auto w-32 h-32 sm:w-40 sm:h-40 rounded-3xl bg-gradient-to-b from-indigo-500 to-indigo-700 text-white shadow-xl flex flex-col items-center justify-center border-4 border-indigo-300 card-bounce">
+                    <span id="matchTargetLetter" class="english-letter text-7xl sm:text-8xl font-bold leading-none select-none">A</span>
+                    <span id="matchTargetHint" class="text-xs text-indigo-100 mt-2 font-medium">לחץ לשמיעה 🔊</span>
+                </div>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="matchOptionsGrid" class="w-full max-w-xl grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-4 mb-2">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- MODE 3: FIND THE LETTER (זהה את האות) -->
+        <section id="section-findLetter" class="hidden w-full flex-1 flex flex-col justify-between items-center">
+            <div class="w-full flex items-center justify-between mb-2">
+                <span id="findProgressText" class="text-sm font-bold text-slate-500 bg-slate-100 px-3 py-1 rounded-full">שאלה 1 מתוך 10</span>
+                <button onclick="toggleFindHint()" class="text-xs sm:text-sm font-bold text-amber-700 bg-amber-100 hover:bg-amber-200 px-3 py-1 rounded-full transition">
+                    💡 רמז לעומר
+                </button>
+            </div>
+
+            <div class="text-center my-3 flex flex-col items-center">
+                <button onclick="playFindAudioPrompt()" class="w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-tr from-amber-400 to-orange-500 text-white shadow-lg flex flex-col items-center justify-center border-4 border-amber-200 card-bounce mb-3">
+                    <span class="text-4xl sm:text-5xl">🔊</span>
+                    <span class="text-xs font-bold mt-1">השמע שוב</span>
+                </button>
+                <h2 id="findInstructionText" class="text-2xl sm:text-3xl font-extrabold text-slate-800">איפה האות הגדולה...</h2>
+                <p id="findSubHint" class="text-slate-500 text-sm mt-1">לחץ על האות הנכונה למטה</p>
+            </div>
+
+            <!-- Options Grid -->
+            <div id="findOptionsGrid" class="w-full max-w-xl grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mt-2 mb-2">
+                <!-- Populated by JS -->
+            </div>
+        </section>
+
+        <!-- MODE 4: PAIRS BOARD (לוח זוגות) -->
+        <section id="section-pairs" class="hidden w-full flex-1 flex flex-col justify-between items-center">
+            <div class="text-center mb-3">
+                <h2 class="text-xl sm:text-2xl font-extrabold text-slate-800">מצא את כל הזוגות! 🧩</h2>
+                <p class="text-slate-600 text-sm">לחץ על אות גדולה ואז על האות הקטנה המתאימה לה כדי להעלים אותן מהלוח</p>
+            </div>
+
+            <div id="pairsBoardGrid" class="w-full max-w-2xl grid grid-cols-5 gap-2.5 sm:gap-4 my-auto">
+                <!-- Populated by JS -->
+            </div>
+
+            <div class="mt-4 flex items-center justify-between w-full max-w-2xl">
+                <span id="pairsRemainingText" class="text-sm font-bold text-slate-600">נשארו: 5 זוגות</span>
+                <button onclick="initPairsGame()" class="text-sm font-bold bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2 rounded-xl transition">
+                    🔄 ערבב מחדש
+                </button>
+            </div>
+        </section>
+
+        <!-- Celebration Modal Overlay (Inside Main Container) -->
+        <div id="celebrationModal" class="hidden absolute inset-0 bg-white/95 backdrop-blur-md z-20 flex flex-col items-center justify-center p-6 text-center animate-pop">
+            <div class="text-6xl mb-3">🏆</div>
+            <h2 id="modalTitle" class="text-3xl font-extrabold text-indigo-900 mb-2">כל הכבוד עומר!</h2>
+            <p id="modalSubtitle" class="text-lg text-slate-600 mb-6 max-w-md">סיימת את הסבב בהצלחה! אתה ממש מוכן למבחן באנגלית!</p>
+            <div class="flex flex-wrap gap-3 justify-center">
+                <button onclick="restartCurrentMode()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-6 py-3 rounded-2xl shadow-lg card-bounce text-lg">
+                    🔁 שחק שוב
+                </button>
+                <button onclick="nextSuggestedMode()" class="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3 rounded-2xl shadow-lg card-bounce text-lg">
+                    🚀 למשחק הבא
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer Quick Progress Bar of Letters Mastered -->
+    <footer class="w-full max-w-4xl mt-5 bg-white/80 backdrop-blur-sm rounded-2xl p-3 px-5 border border-slate-200 flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
+        <span class="font-bold">האותיות של עומר למבחן:</span>
+        <div class="flex items-center gap-2 sm:gap-4">
+            <button onclick="speakLetter('A', 'Apple')" class="english-letter font-bold text-base sm:text-lg bg-red-50 hover:bg-red-100 text-red-700 px-3 py-1 rounded-xl border border-red-200 transition">A a</button>
+            <button onclick="speakLetter('B', 'Bear')" class="english-letter font-bold text-base sm:text-lg bg-blue-50 hover:bg-blue-100 text-blue-700 px-3 py-1 rounded-xl border border-blue-200 transition">B b</button>
+            <button onclick="speakLetter('N', 'Nest')" class="english-letter font-bold text-base sm:text-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 px-3 py-1 rounded-xl border border-emerald-200 transition">N n</button>
+            <button onclick="speakLetter('D', 'Dog')" class="english-letter font-bold text-base sm:text-lg bg-amber-50 hover:bg-amber-100 text-amber-700 px-3 py-1 rounded-xl border border-amber-200 transition">D d</button>
+            <button onclick="speakLetter('G', 'Guitar')" class="english-letter font-bold text-base sm:text-lg bg-purple-50 hover:bg-purple-100 text-purple-700 px-3 py-1 rounded-xl border border-purple-200 transition">G g</button>
+        </div>
+    </footer>
+
+    <script>
+        // --- DATA: THE 5 LETTERS ---
+        // Includes Wikimedia Commons OGG/MP3 spoken letter fallbacks + Google TTS fallback
+        const LETTERS_DATA = [
+            {
+                id: 'A',
+                upper: 'A',
+                lower: 'a',
+                hebrewName: 'אֵיי',
+                ttsPhonetic: 'ay',
+                word: 'Apple',
+                wordHeb: 'תפוח',
+                emoji: '🍎',
+                audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/4/4c/En-us-a.ogg',
+                tip: 'A גדולה נראית כמו אוהל משולש, ו-a קטנה כמו תפוח עגול עם עלה בצד!',
+                color: 'from-rose-400 to-red-500',
+                lightBg: 'bg-rose-50',
+                borderColor: 'border-rose-300',
+                textColor: 'text-rose-700'
+            },
+            {
+                id: 'B',
+                upper: 'B',
+                lower: 'b',
+                hebrewName: 'בִּי',
+                ttsPhonetic: 'bee',
+                word: 'Balloon',
+                wordHeb: 'בלון',
+                emoji: '🎈',
+                audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/60/En-us-b.ogg',
+                tip: 'ל-B גדולה יש 2 בטנים לימין, ול-b קטנה יש בטן אחת לימין!',
+                color: 'from-blue-400 to-indigo-500',
+                lightBg: 'bg-blue-50',
+                borderColor: 'border-blue-300',
+                textColor: 'text-blue-700'
+            },
+            {
+                id: 'N',
+                upper: 'N',
+                lower: 'n',
+                hebrewName: 'אֵן',
+                ttsPhonetic: 'en',
+                word: 'Nest',
+                wordHeb: 'קן לציפור',
+                emoji: '🪺',
+                audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d4/En-us-n.ogg',
+                tip: 'N גדולה עם קווים ישרים, ו-n קטנה נראית כמו שער או מנהרה קטנה!',
+                color: 'from-emerald-400 to-teal-500',
+                lightBg: 'bg-emerald-50',
+                borderColor: 'border-emerald-300',
+                textColor: 'text-emerald-700'
+            },
+            {
+                id: 'D',
+                upper: 'D',
+                lower: 'd',
+                hebrewName: 'דִּי',
+                ttsPhonetic: 'dee',
+                word: 'Dog',
+                wordHeb: 'כלב',
+                emoji: '🐶',
+                audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/c/c8/En-us-d.ogg',
+                tip: 'שים לב! ל-d קטנה הבטן פונה שמאלה (הפוך מ-b)!',
+                color: 'from-amber-400 to-orange-500',
+                lightBg: 'bg-amber-50',
+                borderColor: 'border-amber-300',
+                textColor: 'text-amber-700'
+            },
+            {
+                id: 'G',
+                upper: 'G',
+                lower: 'g',
+                hebrewName: 'ג׳ִי',
+                ttsPhonetic: 'jee',
+                word: 'Guitar',
+                wordHeb: 'גיטרה',
+                emoji: '🎸',
+                audioUrl: 'https://upload.wikimedia.org/wikipedia/commons/0/07/En-us-g.ogg',
+                tip: 'ל-g קטנה יש עיגול למעלה וזנב עגול שיורד למטה כמו וו!',
+                color: 'from-purple-400 to-fuchsia-500',
+                lightBg: 'bg-purple-50',
+                borderColor: 'border-purple-300',
+                textColor: 'text-purple-700'
+            }
+        ];
+
+        const PRAISES = [
+            "כל הכבוד עומר! 🌟",
+            "אלוף העולם! 🏆",
+            "בול פגיעה, עומר! 🎯",
+            "מדהים! תמשיך ככה! 🚀",
+            "איזה תותח אתה עומר! 🔥",
+            "מצוין! אתה לגמרי שולט בזה! ✨"
+        ];
+
+        // --- STATE ---
+        let currentMode = 'learn';
+        let score = 0;
+        let streak = 0;
+
+        // Match Case Mode State
+        let matchQueue = [];
+        let matchIndex = 0;
+        let currentMatchQuestion = null;
+        let isWaitingNext = false;
+
+        // Find Letter Mode State
+        let findQueue = [];
+        let findIndex = 0;
+        let currentFindQuestion = null;
+
+        // Pairs Mode State
+        let selectedPairCard = null;
+        let matchedPairsCount = 0;
+
+        // --- ROBUST MULTI-LAYER AUDIO ENGINE ---
+        let audioCtx = null;
+        let preferredEnglishVoice = null;
+        const preloadedAudioMap = {};
+
+        function initAudioEngine() {
+            if (!audioCtx) {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    audioCtx = new AudioContextClass();
+                }
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+
+            // Preload HTML5 audio elements for each letter
+            LETTERS_DATA.forEach(item => {
+                if (!preloadedAudioMap[item.id]) {
+                    const audioEl = new Audio();
+                    audioEl.src = item.audioUrl;
+                    audioEl.preload = 'auto';
+                    preloadedAudioMap[item.id] = audioEl;
+                }
+            });
+
+            loadVoices();
+        }
+
+        function loadVoices() {
+            if (!('speechSynthesis' in window)) return;
+            const voices = window.speechSynthesis.getVoices();
+            if (voices && voices.length > 0) {
+                preferredEnglishVoice =
+                    voices.find(v => v.lang === 'en-US' && (v.name.includes('Google') || v.name.includes('Samantha') || v.name.includes('Natural'))) ||
+                    voices.find(v => v.lang.startsWith('en-US')) ||
+                    voices.find(v => v.lang.startsWith('en'));
+            }
+        }
+
+        if ('speechSynthesis' in window) {
+            window.speechSynthesis.onvoiceschanged = loadVoices;
+        }
+
+        function unlockAudioAndStart() {
+            initAudioEngine();
+            playTone('correct');
+            const overlay = document.getElementById('audioUnlockOverlay');
+            if (overlay) overlay.classList.add('hidden');
+            // Speak a short welcome or the letter A to warm up TTS
+            setTimeout(() => {
+                speakLetter('A');
+            }, 250);
+        }
+
+        function testAudioSystem() {
+            initAudioEngine();
+            playTone('correct');
+            const statusEl = document.getElementById('audioStatusText');
+            statusEl.textContent = "הקול פעיל! 🎵";
+            setTimeout(() => {
+                speakLetter('A', 'Apple');
+            }, 300);
+            setTimeout(() => {
+                statusEl.textContent = "בדיקת שמע";
+            }, 3000);
+        }
+
+        // Play synthesized musical tones (100% reliable in any browser/iframe)
+        function playTone(type) {
+            try {
+                initAudioEngine();
+                if (!audioCtx) return;
+
+                const now = audioCtx.currentTime;
+
+                if (type === 'correct') {
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'sine';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+                        gain.gain.setValueAtTime(0.22, now + idx * 0.08);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.35);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + idx * 0.08);
+                        osc.stop(now + idx * 0.08 + 0.35);
+                    });
+                } else if (type === 'wrong') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(200, now);
+                    osc.frequency.linearRampToValueAtTime(140, now + 0.25);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.35);
+                } else if (type === 'pop') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(600, now);
+                    osc.frequency.exponentialRampToValueAtTime(900, now + 0.08);
+                    gain.gain.setValueAtTime(0.18, now);
+                    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                }
+            } catch (e) {
+                // Ignore audio errors
+            }
+        }
+
+        // Play specific distinct musical signature per letter + Voice (Web Speech + HTML5 Audio fallback)
+        function speakLetter(letterId, word = '') {
+            initAudioEngine();
+            playTone('pop');
+
+            const letterUpper = letterId.toUpperCase();
+            const letterObj = LETTERS_DATA.find(l => l.id === letterUpper);
+            const textToSpeak = word
+                ? `${letterUpper}. ${word}`
+                : (letterObj ? letterObj.ttsPhonetic : letterUpper);
+
+            let speechStarted = false;
+
+            // Layer 1: Web Speech API
+            if ('speechSynthesis' in window) {
+                try {
+                    window.speechSynthesis.cancel();
+                    window.speechSynthesis.resume();
+                    loadVoices();
+
+                    const utter = new SpeechSynthesisUtterance(textToSpeak);
+                    utter.lang = 'en-US';
+                    if (preferredEnglishVoice) {
+                        utter.voice = preferredEnglishVoice;
+                    }
+                    utter.rate = 0.85;
+                    utter.pitch = 1.05;
+                    utter.volume = 1.0;
+
+                    utter.onstart = () => {
+                        speechStarted = true;
+                    };
+                    utter.onerror = () => {
+                        if (!speechStarted) playHtml5AudioFallback(letterUpper);
+                    };
+
+                    window.speechSynthesis.speak(utter);
+
+                    // Layer 2: If SpeechSynthesis fails to trigger within 350ms (common in sandboxed iframes), play HTML5 audio
+                    setTimeout(() => {
+                        if (!speechStarted && !window.speechSynthesis.speaking) {
+                            playHtml5AudioFallback(letterUpper);
+                        }
+                    }, 350);
+                } catch (err) {
+                    playHtml5AudioFallback(letterUpper);
+                }
+            } else {
+                playHtml5AudioFallback(letterUpper);
+            }
+        }
+
+        function playHtml5AudioFallback(letterUpper) {
+            try {
+                const audioEl = preloadedAudioMap[letterUpper];
+                if (audioEl) {
+                    audioEl.currentTime = 0;
+                    audioEl.play().catch(() => {});
+                }
+            } catch (e) {
+                // Ignore fallback errors
+            }
+        }
+
+        // Global listener to unlock audio on first click anywhere
+        document.addEventListener('pointerdown', function onFirstTap() {
+            initAudioEngine();
+            document.removeEventListener('pointerdown', onFirstTap);
+        }, { once: true });
+
+        // --- SCORE & FEEDBACK HELPERS ---
+        function updateStats(pointsDelta, resetStreak = false) {
+            if (resetStreak) {
+                streak = 0;
+            } else if (pointsDelta > 0) {
+                score += pointsDelta;
+                streak += 1;
+            }
+            document.getElementById('scoreDisplay').textContent = score;
+            document.getElementById('streakDisplay').textContent = streak;
+        }
+
+        function showFeedback(text, isSuccess = true) {
+            const banner = document.getElementById('feedbackBanner');
+            banner.textContent = text;
+            banner.className = `mb-4 py-2.5 px-4 rounded-2xl text-center font-extrabold text-base sm:text-lg transition-all animate-pop ${
+                isSuccess 
+                    ? 'bg-emerald-100 text-emerald-800 border-2 border-emerald-300' 
+                    : 'bg-rose-100 text-rose-800 border-2 border-rose-300'
+            }`;
+            banner.classList.remove('hidden');
+        }
+
+        function hideFeedback() {
+            document.getElementById('feedbackBanner').classList.add('hidden');
+        }
+
+        function fireConfetti() {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+
+        function shuffleArray(arr) {
+            const copy = [...arr];
+            for (let i = copy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [copy[i], copy[j]] = [copy[j], copy[i]];
+            }
+            return copy;
+        }
+
+        // --- NAVIGATION & MODE SWITCHING ---
+        function switchMode(mode) {
+            currentMode = mode;
+            hideFeedback();
+            document.getElementById('celebrationModal').classList.add('hidden');
+
+            // Update Tabs UI
+            const modes = ['learn', 'matchCase', 'findLetter', 'pairs'];
+            modes.forEach(m => {
+                const tab = document.getElementById(`tab-${m}`);
+                const sec = document.getElementById(`section-${m}`);
+                if (m === mode) {
+                    tab.className = "mode-tab card-bounce flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-extrabold text-sm sm:text-base shadow-md border-2 bg-indigo-600 text-white border-indigo-700 scale-105";
+                    sec.classList.remove('hidden');
+                } else {
+                    tab.className = "mode-tab card-bounce flex items-center justify-center gap-2 py-3 px-4 rounded-2xl font-bold text-sm sm:text-base shadow-sm border-2 bg-white/80 text-slate-700 border-slate-200 hover:bg-indigo-50";
+                    sec.classList.add('hidden');
+                }
+            });
+
+            if (mode === 'learn') renderLearnCards();
+            if (mode === 'matchCase') initMatchCaseGame();
+            if (mode === 'findLetter') initFindLetterGame();
+            if (mode === 'pairs') initPairsGame();
+        }
+
+        function restartCurrentMode() {
+            switchMode(currentMode);
+        }
+
+        function nextSuggestedMode() {
+            const order = ['learn', 'matchCase', 'findLetter', 'pairs'];
+            const idx = order.indexOf(currentMode);
+            const next = order[(idx + 1) % order.length];
+            switchMode(next);
+        }
+
+        function showCelebration(title, subtitle) {
+            fireConfetti();
+            document.getElementById('modalTitle').textContent = title;
+            document.getElementById('modalSubtitle').textContent = subtitle;
+            document.getElementById('celebrationModal').classList.remove('hidden');
+        }
+
+        // ==========================================
+        // MODE 1: LEARN CARDS (הכרת האותיות)
+        // ==========================================
+        function renderLearnCards() {
+            const grid = document.getElementById('learnGrid');
+            grid.innerHTML = '';
+
+            LETTERS_DATA.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `${item.lightBg} border-2 ${item.borderColor} rounded-3xl p-4 flex flex-col items-center justify-between text-center shadow-md card-bounce cursor-pointer`;
+                card.onclick = () => speakLetter(item.upper, item.word);
+
+                card.innerHTML = `
+                    <div class="w-full flex justify-between items-center mb-1">
+                        <span class="text-xs font-extrabold px-2.5 py-0.5 rounded-full bg-white/80 ${item.textColor}">אות: ${item.hebrewName}</span>
+                        <span class="text-lg">🔊</span>
+                    </div>
+                    <div class="my-2 flex items-baseline justify-center gap-3">
+                        <span class="english-letter text-6xl font-bold text-slate-800">${item.upper}</span>
+                        <span class="english-letter text-6xl font-bold ${item.textColor}">${item.lower}</span>
+                    </div>
+                    <div class="bg-white/90 rounded-2xl px-3 py-2 w-full mb-2 shadow-sm">
+                        <div class="text-2xl mb-0.5">${item.emoji}</div>
+                        <div class="english-letter font-bold text-slate-800 text-base">${item.word}</div>
+                        <div class="text-xs text-slate-500">${item.wordHeb}</div>
+                    </div>
+                    <p class="text-xs text-slate-700 font-medium leading-snug">${item.tip}</p>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // ==========================================
+        // MODE 2: MATCH UPPER & LOWER (גדולה וקטנה)
+        // ==========================================
+        function initMatchCaseGame() {
+            // Create 10 questions: 5 Upper->Lower and 5 Lower->Upper
+            const questions = [];
+            LETTERS_DATA.forEach(item => {
+                questions.push({ letterObj: item, askFor: 'lower' }); // Show Upper, pick Lower
+                questions.push({ letterObj: item, askFor: 'upper' }); // Show Lower, pick Upper
+            });
+            matchQueue = shuffleArray(questions);
+            matchIndex = 0;
+            renderMatchQuestion();
+        }
+
+        function renderMatchQuestion() {
+            isWaitingNext = false;
+            hideFeedback();
+            // Clear any sticky mobile focus
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+
+            currentMatchQuestion = matchQueue[matchIndex];
+            const { letterObj, askFor } = currentMatchQuestion;
+
+            document.getElementById('matchProgressText').textContent = `שאלה ${matchIndex + 1} מתוך ${matchQueue.length}`;
+
+            const shownChar = askFor === 'lower' ? letterObj.upper : letterObj.lower;
+            const correctChar = askFor === 'lower' ? letterObj.lower : letterObj.upper;
+
+            document.getElementById('matchPrompt').textContent = askFor === 'lower'
+                ? `עומר, איזו אות קטנה מתאימה לאות הגדולה ${letterObj.upper}?`
+                : `עומר, איזו אות גדולה מתאימה לאות הקטנה ${letterObj.lower}?`;
+
+            document.getElementById('matchTargetLetter').textContent = shownChar;
+
+            // Build 4 options (correct + 3 distractors of same case)
+            const allOthers = LETTERS_DATA.filter(l => l.id !== letterObj.id);
+            const distractors = shuffleArray(allOthers).slice(0, 3).map(l => askFor === 'lower' ? l.lower : l.upper);
+
+            // Ensure tricky pairs (b/d or a/g) are prioritized as distractors if relevant
+            if (askFor === 'lower') {
+                if (letterObj.id === 'B' && !distractors.includes('d')) distractors[0] = 'd';
+                if (letterObj.id === 'D' && !distractors.includes('b')) distractors[0] = 'b';
+                if (letterObj.id === 'G' && !distractors.includes('a')) distractors[0] = 'a';
+            }
+
+            const options = shuffleArray([correctChar, ...distractors]);
+            const grid = document.getElementById('matchOptionsGrid');
+            grid.innerHTML = '';
+
+            options.forEach(optChar => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "option-btn option-btn-match h-24 sm:h-28 rounded-3xl bg-slate-50 border-4 border-slate-200 shadow-md flex items-center justify-center card-bounce";
+                btn.innerHTML = `<span class="english-letter text-5xl sm:text-6xl font-bold text-slate-800 pointer-events-none">${optChar}</span>`;
+                btn.onclick = () => {
+                    btn.blur();
+                    handleMatchAnswer(optChar, correctChar, btn, letterObj);
+                };
+                grid.appendChild(btn);
+            });
+        }
+
+        function speakCurrentTarget() {
+            if (!currentMatchQuestion) return;
+            speakLetter(currentMatchQuestion.letterObj.upper);
+        }
+
+        function handleMatchAnswer(selected, correct, btnElement, letterObj) {
+            if (isWaitingNext) return;
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+
+            if (selected === correct) {
+                isWaitingNext = true;
+                playTone('correct');
+                speakLetter(letterObj.upper);
+                btnElement.className = "option-btn h-24 sm:h-28 rounded-3xl bg-emerald-500 border-4 border-emerald-600 text-white shadow-lg flex items-center justify-center scale-105 transition-all";
+                btnElement.querySelector('span').className = "english-letter text-5xl sm:text-6xl font-bold text-white pointer-events-none";
+
+                updateStats(10);
+                const praise = PRAISES[Math.floor(Math.random() * PRAISES.length)];
+                showFeedback(`${praise} (${letterObj.upper} מתאימה ל-${letterObj.lower})`, true);
+
+                setTimeout(() => {
+                    matchIndex++;
+                    if (matchIndex < matchQueue.length) {
+                        renderMatchQuestion();
+                    } else {
+                        showCelebration("אלוף האותיות עומר! 🏆", "זיהית את כל האותיות הגדולות והקטנות בהצלחה!");
+                    }
+                }, 1100);
+            } else {
+                playTone('wrong');
+                updateStats(0, true);
+                btnElement.classList.add('animate-shake', 'bg-rose-100', 'border-rose-400');
+                
+                // Specific helpful hint for b vs d
+                if ((selected === 'b' && correct === 'd') || (selected === 'd' && correct === 'b')) {
+                    showFeedback("כמעט עומר! זכור: ב-b הבטן פונה ימינה (כמו ב-B), וב-d הבטן פונה שמאלה!", false);
+                } else {
+                    showFeedback("לא נורא עומר, נסה שוב! 💪", false);
+                }
+
+                setTimeout(() => {
+                    btnElement.classList.remove('animate-shake', 'bg-rose-100', 'border-rose-400');
+                    btnElement.blur();
+                }, 450);
+            }
+        }
+
+        // ==========================================
+        // MODE 3: FIND THE LETTER (זהה את האות)
+        // ==========================================
+        function initFindLetterGame() {
+            const questions = [];
+            LETTERS_DATA.forEach(item => {
+                questions.push({ letterObj: item, targetCase: 'upper' });
+                questions.push({ letterObj: item, targetCase: 'lower' });
+            });
+            findQueue = shuffleArray(questions);
+            findIndex = 0;
+            renderFindQuestion();
+        }
+
+        function renderFindQuestion() {
+            isWaitingNext = false;
+            hideFeedback();
+            // Clear any sticky mobile focus
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+
+            currentFindQuestion = findQueue[findIndex];
+            const { letterObj, targetCase } = currentFindQuestion;
+
+            document.getElementById('findProgressText').textContent = `שאלה ${findIndex + 1} מתוך ${findQueue.length}`;
+
+            const caseWord = targetCase === 'upper' ? 'הגדולה' : 'הקטנה';
+            document.getElementById('findInstructionText').innerHTML = `עומר, הקשב ובחר את האות ${caseWord} <span class="text-indigo-600 underline">״${letterObj.hebrewName}״</span>!`;
+            document.getElementById('findSubHint').textContent = `לחץ על כפתור הרמקול הכתום כדי לשמוע שוב את האות`;
+
+            const correctChar = targetCase === 'upper' ? letterObj.upper : letterObj.lower;
+            const others = LETTERS_DATA.filter(l => l.id !== letterObj.id);
+            const distractors = shuffleArray(others).slice(0, 3).map(l => targetCase === 'upper' ? l.upper : l.lower);
+
+            const options = shuffleArray([correctChar, ...distractors]);
+            const grid = document.getElementById('findOptionsGrid');
+            grid.innerHTML = '';
+
+            options.forEach(optChar => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = "option-btn option-btn-find h-24 sm:h-28 rounded-3xl bg-slate-50 border-4 border-slate-200 shadow-md flex items-center justify-center card-bounce";
+                btn.innerHTML = `<span class="english-letter text-5xl sm:text-6xl font-bold text-slate-800 pointer-events-none">${optChar}</span>`;
+                btn.onclick = () => {
+                    btn.blur();
+                    handleFindAnswer(optChar, correctChar, btn, letterObj);
+                };
+                grid.appendChild(btn);
+            });
+
+            // Auto speak the letter
+            setTimeout(() => playFindAudioPrompt(), 200);
+        }
+
+        function toggleFindHint() {
+            if (!currentFindQuestion) return;
+            const { letterObj } = currentFindQuestion;
+            document.getElementById('findSubHint').textContent = `רמז לעומר: כמו במילה ${letterObj.word} (${letterObj.wordHeb}) ${letterObj.emoji}`;
+            speakLetter(letterObj.upper, letterObj.word);
+        }
+
+        function playFindAudioPrompt() {
+            if (!currentFindQuestion) return;
+            speakLetter(currentFindQuestion.letterObj.upper);
+        }
+
+        function handleFindAnswer(selected, correct, btnElement, letterObj) {
+            if (isWaitingNext) return;
+            if (document.activeElement && typeof document.activeElement.blur === 'function') {
+                document.activeElement.blur();
+            }
+
+            if (selected === correct) {
+                isWaitingNext = true;
+                playTone('correct');
+                btnElement.className = "option-btn h-24 sm:h-28 rounded-3xl bg-emerald-500 border-4 border-emerald-600 text-white shadow-lg flex items-center justify-center scale-105 transition-all";
+                btnElement.querySelector('span').className = "english-letter text-5xl sm:text-6xl font-bold text-white pointer-events-none";
+
+                updateStats(10);
+                const praise = PRAISES[Math.floor(Math.random() * PRAISES.length)];
+                showFeedback(`${praise} זו האות ${correct} (${letterObj.hebrewName})!`, true);
+
+                setTimeout(() => {
+                    findIndex++;
+                    if (findIndex < findQueue.length) {
+                        renderFindQuestion();
+                    } else {
+                        showCelebration("כל הכבוד עומר! 🎧🏆", "זיהית את כל 10 האותיות משמיעה וקריאה!");
+                    }
+                }, 1100);
+            } else {
+                playTone('wrong');
+                updateStats(0, true);
+                btnElement.classList.add('animate-shake', 'bg-rose-100', 'border-rose-400');
+                showFeedback(`נסה שוב עומר! חפש את האות ${letterObj.hebrewName} (${letterObj.emoji})`, false);
+                setTimeout(() => {
+                    btnElement.classList.remove('animate-shake', 'bg-rose-100', 'border-rose-400');
+                    btnElement.blur();
+                }, 450);
+            }
+        }
+
+        // ==========================================
+        // MODE 4: PAIRS BOARD (לוח זוגות)
+        // ==========================================
+        function initPairsGame() {
+            hideFeedback();
+            selectedPairCard = null;
+            matchedPairsCount = 0;
+            updatePairsRemaining();
+
+            const cardsData = [];
+            LETTERS_DATA.forEach(item => {
+                cardsData.push({ id: item.id, char: item.upper, caseType: 'upper', hebrewName: item.hebrewName });
+                cardsData.push({ id: item.id, char: item.lower, caseType: 'lower', hebrewName: item.hebrewName });
+            });
+
+            const shuffled = shuffleArray(cardsData);
+            const grid = document.getElementById('pairsBoardGrid');
+            grid.innerHTML = '';
+
+            shuffled.forEach((cardObj, idx) => {
+                const btn = document.createElement('button');
+                btn.dataset.id = cardObj.id;
+                btn.dataset.caseType = cardObj.caseType;
+                btn.dataset.index = idx;
+                btn.className = "pair-card h-24 sm:h-28 rounded-2xl bg-gradient-to-b from-white to-slate-50 border-4 border-indigo-200 shadow-md flex flex-col items-center justify-center card-bounce transition-all";
+                btn.innerHTML = `
+                    <span class="english-letter text-4xl sm:text-5xl font-bold text-slate-800">${cardObj.char}</span>
+                    <span class="text-[11px] font-bold text-slate-400 mt-1">${cardObj.caseType === 'upper' ? 'גדולה' : 'קטנה'}</span>
+                `;
+                btn.onclick = () => handlePairCardClick(btn, cardObj);
+                grid.appendChild(btn);
+            });
+        }
+
+        function updatePairsRemaining() {
+            const left = 5 - matchedPairsCount;
+            document.getElementById('pairsRemainingText').textContent = `נשארו: ${left} זוגות`;
+        }
+
+        function handlePairCardClick(btnElement, cardObj) {
+            if (btnElement.classList.contains('matched-card')) return;
+
+            speakLetter(cardObj.id);
+
+            // If clicking the exact same card, deselect it
+            if (selectedPairCard && selectedPairCard.btn === btnElement) {
+                btnElement.classList.remove('border-amber-400', 'bg-amber-50', 'scale-105');
+                btnElement.classList.add('border-indigo-200');
+                selectedPairCard = null;
+                return;
+            }
+
+            // First selection
+            if (!selectedPairCard) {
+                selectedPairCard = { btn: btnElement, data: cardObj };
+                btnElement.classList.remove('border-indigo-200');
+                btnElement.classList.add('border-amber-400', 'bg-amber-50', 'scale-105');
+                return;
+            }
+
+            // Second selection: check match
+            const first = selectedPairCard;
+            selectedPairCard = null;
+
+            if (first.data.id === cardObj.id && first.data.caseType !== cardObj.caseType) {
+                // Match!
+                playTone('correct');
+                updateStats(15);
+                matchedPairsCount++;
+                updatePairsRemaining();
+
+                [first.btn, btnElement].forEach(el => {
+                    el.classList.add('matched-card');
+                    el.disabled = true;
+                    el.className = "pair-card matched-card h-24 sm:h-28 rounded-2xl bg-emerald-100 border-4 border-emerald-400 text-emerald-700 flex flex-col items-center justify-center opacity-40 scale-95 transition-all";
+                });
+
+                showFeedback(`יופי עומר! מצאת את הזוג ${cardObj.id} ו-${cardObj.id.toLowerCase()}! 🎉`, true);
+
+                if (matchedPairsCount === 5) {
+                    setTimeout(() => {
+                        showCelebration("ניקית את כל הלוח עומר! 🧩🏆", "התאמת את כל 5 הזוגות של האותיות הגדולות והקטנות בלי בעיה!");
+                    }, 600);
+                }
+            } else {
+                // Not a match
+                playTone('wrong');
+                updateStats(0, true);
+                btnElement.classList.add('border-rose-400', 'bg-rose-50', 'animate-shake');
+                first.btn.classList.add('border-rose-400', 'bg-rose-50', 'animate-shake');
+
+                showFeedback("זה לא זוג מתאים, נסה שוב עומר! 💪", false);
+
+                setTimeout(() => {
+                    [first.btn, btnElement].forEach(el => {
+                        el.classList.remove('border-amber-400', 'bg-amber-50', 'border-rose-400', 'bg-rose-50', 'scale-105', 'animate-shake');
+                        el.classList.add('border-indigo-200');
+                    });
+                }, 500);
+            }
+        }
+
+        // Start app in Learn mode on load
+        window.onload = function() {
+            switchMode('learn');
+        };
+    </script>
+</body>
+</html>
